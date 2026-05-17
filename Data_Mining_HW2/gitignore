@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+
+# Large data files (kept locally, downloaded on demand)
+data/*.xlsx
+data/*.csv
+!data/.gitkeep
+
+# Avoid committing temporary results that are easily regenerated
+results/figures/*.png
+results/figures/*.pdf
+!results/figures/.gitkeep
+results/tables/*.csv
+!results/tables/.gitkeep
+
+# Gradio cache
+gradio_cached_examples/
+flagged/
