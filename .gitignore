@@ -22,10 +22,12 @@ dist/
 *.swp
 Thumbs.db
 
-# Large data files (kept locally, downloaded on demand)
-data/*.xlsx
-data/*.csv
+# Data files — exclude everything in data/ by default,
+# then explicitly track ONLY CC_GENERAL (the one not publicly downloadable).
+# Online Shoppers and Online Retail II auto-download from UCI on first use.
+data/*
 !data/.gitkeep
+!data/CC_GENERAL.csv
 
 # Avoid committing temporary results that are easily regenerated
 results/figures/*.png
