@@ -275,6 +275,82 @@ def describe_prepared_data(prepared: PreparedData) -> None:
     print(f"  Buyers     (1): {test_pos:>6}")
 
 
+# ---------------------------------------------------------------------------
+# Clustering: CC General
+# ---------------------------------------------------------------------------
+
+def preprocess_cc_general(
+    df: pd.DataFrame,
+) -> tuple[np.ndarray, list[str], StandardScaler]:
+    """Prepare CC General for unsupervised clustering.
+
+    Pipeline
+    --------
+    1. Drop ``CUST_ID`` (identifier column).
+    2. Impute missing values with the column median (robust to outliers).
+    3. Standardise every feature — essential for distance-based clustering
+       (K-Means, Agglomerative, DBSCAN all rely on Euclidean distance).
+
+    Returns
+    -------
+    X_scaled : np.ndarray
+        Scaled feature matrix.
+    feature_names : list of str
+        Column names in the order they appear in ``X_scaled``.
+    scaler : StandardScaler
+        Fitted scaler (kept so centroids can be inverse-transformed).
+    """
+    df = df.copy()
+    if "CUST_ID" in df.columns:
+        df = df.drop(columns=["CUST_ID"])
+    df = df.fillna(df.median(numeric_only=True))
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df)
+    return X_scaled, df.columns.tolist(), scaler
+
+
+# ---------------------------------------------------------------------------
+# Association: Online Retail II
+# ---------------------------------------------------------------------------
+
+def preprocess_online_retail(
+    df: pd.DataFrame,
+    country: str | None = None,
+    min_basket_size: int = 2,
+) -> pd.DataFrame:
+    """Reshape the Online Retail II transaction log into one-hot basket form.
+
+    Pipeline
+    --------
+    1. Drop returns (Quantity <= 0) and cancelled invoices (Invoice ~ 'C*').
+    2. Drop rows with missing Customer ID or Description.
+    3. Optionally restrict to one country.
+    4. Pivot to a wide matrix indexed by Invoice with one column per product.
+    5. Binarise to 0/1 (item present in basket or not).
+    6. Drop tiny baskets (fewer than ``min_basket_size`` items).
+
+    The output is exactly the input format expected by mlxtend's
+    ``apriori`` and ``fpgrowth`` functions.
+    """
+    df = df.copy()
+    df = df[df["Quantity"] > 0]
+    df = df[~df["Invoice"].astype(str).str.startswith("C")]
+    df = df.dropna(subset=["Customer ID", "Description"])
+
+    if country is not None:
+        df = df[df["Country"] == country]
+
+    basket = (
+        df.groupby(["Invoice", "Description"])["Quantity"]
+        .sum()
+        .unstack(fill_value=0)
+    )
+    basket = (basket > 0).astype(int)
+    basket = basket[basket.sum(axis=1) >= min_basket_size]
+    return basket
+
+
 if __name__ == "__main__":
     # Smoke test — run with: python -m src.preprocessing
     from data_loader import load_online_shoppers
