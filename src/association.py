@@ -53,7 +53,7 @@ TABLE_RULES = TABLES_DIR / "association_rules.csv"
 
 def mine_frequent_itemsets(
     basket: pd.DataFrame,
-    min_support: float = 0.03,
+    min_support: float = 0.01,
     verbose: bool = True,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, float]]:
     """Mine frequent itemsets with both Apriori and FP-Growth, time each.
@@ -62,8 +62,11 @@ def mine_frequent_itemsets(
     ----------
     basket : pd.DataFrame
         One-hot basket matrix from ``preprocess_online_retail``.
-    min_support : float, default 0.03
+    min_support : float, default 0.01
         Minimum support threshold for an itemset to be considered frequent.
+        Retail basket data is sparse (thousands of distinct products), so a
+        low threshold (~0.01) is needed to surface meaningful product pairs;
+        higher values such as 0.03 yield very few rules.
 
     Returns
     -------
