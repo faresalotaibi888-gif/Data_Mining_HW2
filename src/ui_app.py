@@ -296,10 +296,18 @@ def build_classification_tab():
                 region = gr.Number(value=1, precision=0, label="Region code")
                 traffic_type = gr.Number(value=2, precision=0, label="Traffic source code")
 
+        # Read available model names from state at build time (state is
+        # populated by launch_app BEFORE build_app runs).
+        _model_names = list((CLASSIFICATION_STATE.get("models") or {}).keys())
+        _default_model = "AdaBoost" if "AdaBoost" in _model_names else (
+            _model_names[0] if _model_names else None
+        )
+
         with gr.Row():
             model_name = gr.Dropdown(
-                choices=[],  # populated at launch
-                value=None, label="Choose model (default: AdaBoost — our top performer)",
+                choices=_model_names,
+                value=_default_model,
+                label="Choose model (default: AdaBoost — our top performer)",
                 interactive=True,
             )
             predict_btn = gr.Button("🔮 Predict purchase probability", variant="primary", scale=2)
@@ -326,9 +334,6 @@ def build_classification_tab():
             ],
             outputs=[verdict_box, stats_box, drivers_box, prob_number],
         )
-
-        # Expose the dropdown for late population
-        tab.model_dropdown = model_name
 
     return tab
 
@@ -617,20 +622,13 @@ def build_app() -> gr.Blocks:
                 gr.Markdown(ABOUT_MARKDOWN)
 
             with gr.Tab("🔮 Will this visitor buy?"):
-                cls_tab = build_classification_tab()
+                build_classification_tab()
 
             with gr.Tab("👥 Who are my customers?"):
                 build_clustering_tab()
 
             with gr.Tab("🛍️ What products go together?"):
                 build_association_tab()
-
-        # Populate the classification model dropdown now that state is available
-        if CLASSIFICATION_STATE["models"] is not None:
-            names = list(CLASSIFICATION_STATE["models"].keys())
-            default = "AdaBoost" if "AdaBoost" in names else names[0]
-            cls_tab.model_dropdown.choices = names
-            cls_tab.model_dropdown.value = default
 
     return app
 
